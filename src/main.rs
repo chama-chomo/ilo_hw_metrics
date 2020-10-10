@@ -58,7 +58,7 @@ fn main() {
     let passw: &str = "Administrator";
     let init_session = IloSession::create(url, user, passw).expect("Token not acquired");
 
-    let chassis_data = init_session.chassis_status().expect("Chassis data could not be obtained");
+    let chassis_data = init_session.chassis().expect("Chassis data could not be obtained");
 
     println!("Chassis health: {:?}", &chassis_data)
 }

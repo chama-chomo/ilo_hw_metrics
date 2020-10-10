@@ -2,7 +2,7 @@ pub mod ilo_api_mod {
 
     use error_chain::error_chain;
     use std::env;
-    use serde::Deserialize;
+    use serde::{ Deserialize, Serialize };
 
     error_chain! {
         foreign_links {
@@ -22,15 +22,53 @@ pub mod ilo_api_mod {
         pub client: reqwest::blocking::Client
     }
 
+    #[derive(Debug)]
     #[derive(Deserialize)]
-    pub struct StatusInner {
-        Health: String,
-        State: String
+    #[serde(rename_all = "camelCase")]
+    pub struct Root {
+        #[serde(rename = "Status")]
+        pub status: Status2,
+        #[serde(rename = "Oem")]
+        pub oem: Oem,
     }
 
-    #[derive(Deserialize)]
-    pub struct Chassis {
-        pub Status: StatusInner,
+    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Oem {
+        #[serde(rename = "Hpe")]
+        pub hpe: Hpe,
+    }
+
+    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Hpe {
+        #[serde(rename = "SmartStorageBattery")]
+        pub smart_storage_battery: Vec<SmartStorageBattery>,
+    }
+
+    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Status2 {
+        #[serde(rename = "Health")]
+        pub health: String,
+        #[serde(rename = "State")]
+        pub state: String,
+    }
+
+    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct SmartStorageBattery {
+        #[serde(rename = "Status")]
+        pub status: Status,
+    }
+
+    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Status {
+        #[serde(rename = "Health")]
+        pub health: String,
+        #[serde(rename = "State")]
+        pub state: String,
     }
 
     impl IloSession {
@@ -61,9 +99,7 @@ pub mod ilo_api_mod {
             Ok(Self { token, client, url_base: url.to_owned() })
         }
 
-
-
-        pub fn chassis_status(self) -> Result<String> {
+        pub fn chassis(self) -> Result<Root> {
             // Endpoint for gathering Chassis data
             let endpoint: &str = "/redfish/v1/Chassis/1/";
             let full_url: &str = &[&self.url_base, endpoint].join("");
@@ -73,10 +109,9 @@ pub mod ilo_api_mod {
             let res = self.client.get(full_url)
                 .header("X-Auth-Token", self.token.to_string())
                 .send()?
-                .json::<Chassis>()?;
+                .json::<Root>()?;
 
-            Ok(res.Status.Health)
-
+            Ok(res)
         }
     }
 }
