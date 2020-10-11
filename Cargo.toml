@@ -14,4 +14,4 @@ ureq = { version = "*", features = ["json"] }
 serde_json = { version = "*" }
 serde = { version = "*" }
 error-chain = { version = "*" }
-
+clap = { version = "2.3.33" }
